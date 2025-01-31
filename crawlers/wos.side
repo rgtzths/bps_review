@@ -1,0 +1,91 @@
+{
+  "id": "bc130597-fcb9-4a81-80e4-1fe709e27707",
+  "version": "2.0",
+  "name": "wos",
+  "url": "https://www.webofscience.com/",
+  "tests": [{
+    "id": "17c137bc-acaf-428d-8e4c-41a0de971593",
+    "name": "search",
+    "commands": [{
+      "id": "3676e27a-1c4d-4f05-822f-f35c54225de7",
+      "comment": "",
+      "command": "open",
+      "target": "https://www.webofscience.com/wos/woscc/basic-search",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "797d3abe-02f4-4873-8eeb-e94d52b749aa",
+      "comment": "",
+      "command": "click",
+      "target": "linkText=Advanced search",
+      "targets": [
+        ["linkText=Advanced search", "linkText"],
+        ["css=.active-link", "css:finder"],
+        ["xpath=//a[contains(text(),'Advanced search')]", "xpath:link"],
+        ["xpath=//form[@id='snSearchType']/div[2]/a", "xpath:idRelative"],
+        ["xpath=//a[contains(@href, '/wos/woscc/advanced-search')]", "xpath:href"],
+        ["xpath=//div[2]/a", "xpath:position"],
+        ["xpath=//a[contains(.,' Advanced search')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "fba5c776-f3e0-4d03-b5d3-24a069dd1ea6",
+      "comment": "",
+      "command": "click",
+      "target": "id=advancedSearchInputArea",
+      "targets": [
+        ["id=advancedSearchInputArea", "id"],
+        ["name=search", "name"],
+        ["css=#advancedSearchInputArea", "css:finder"],
+        ["xpath=//textarea[@id='advancedSearchInputArea']", "xpath:attributes"],
+        ["xpath=//textarea", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "4ecca00f-041e-4945-8629-7a3c4b31adf0",
+      "comment": "",
+      "command": "type",
+      "target": "id=advancedSearchInputArea",
+      "targets": [
+        ["id=advancedSearchInputArea", "id"],
+        ["name=search", "name"],
+        ["css=#advancedSearchInputArea", "css:finder"],
+        ["xpath=//textarea[@id='advancedSearchInputArea']", "xpath:attributes"],
+        ["xpath=//textarea", "xpath:position"]
+      ],
+      "value": "((TS=(6G)) AND (TS=(spectrum management) OR TS=(network slicing) OR TS=(network management) OR TS=(channel estimation) OR TS=(channel management)  OR TS=(user mobility)  OR TS=(user positioning)  OR TS=(content caching)  OR TS=(computation allocation)  OR TS=(energy efficiency)  OR TS=(traffic management)  OR TS=(resource management)) AND ( TS=(Machine Learning) OR TS=(Supervised Learning)  OR TS=(Unsupervised Learning)  OR TS=(reinforcement learning)  OR TS=(neural network)  OR TS=(multi-layer perception)  OR TS=(convolutional neural network)  OR TS=(recurrent neural network) ) NOT (TI=(review) OR TI=(survey) OR TI=(systematic review))) "
+    }, {
+      "id": "4f5151dd-0a67-40ee-b9fb-b75cc9456557",
+      "comment": "",
+      "command": "click",
+      "target": "css=.add-timespan-row > .mat-button-wrapper",
+      "targets": [
+        ["css=.add-timespan-row > .mat-button-wrapper", "css:finder"],
+        ["xpath=//div[3]/div/div/button/span", "xpath:position"],
+        ["xpath=//span[contains(.,'add Add date range')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "cf576fb8-5029-4a37-942b-9b96f83a0496",
+      "comment": "",
+      "command": "click",
+      "target": "css=.timespan-select-holder .dropdown-text",
+      "targets": [
+        ["css=.timespan-select-holder .dropdown-text", "css:finder"],
+        ["xpath=//app-search-timespan/div/div/div/button/span", "xpath:position"],
+        ["xpath=//span[contains(.,'Publication Date')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }]
+  }],
+  "suites": [{
+    "id": "cd118071-dbd6-498b-9863-f84266223a7e",
+    "name": "Default Suite",
+    "persistSession": false,
+    "parallel": false,
+    "timeout": 300,
+    "tests": ["17c137bc-acaf-428d-8e4c-41a0de971593"]
+  }],
+  "urls": ["https://www.webofscience.com/"],
+  "plugins": []
+}
