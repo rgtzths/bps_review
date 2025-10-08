@@ -38,5 +38,5 @@ concatenated_df = pd.concat([scopus_results, ieeexplore_results, wos_results], i
 
 # Remove duplicates based on column 'A'
 result_df = concatenated_df.drop_duplicates(subset='DOI')
-result_df.to_csv("aggregated_results.csv", index=False)
+result_df.to_csv("crawler_results_cleaned.csv", index=False)
 

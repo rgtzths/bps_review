@@ -10,7 +10,7 @@ csv_files = glob.glob(f"{path}/scimagojr*.csv")
 dataframes = []
 for csv_file in csv_files:
     df = pd.read_csv(csv_file, sep=";")
-    df = df[["Title", "Issn", "SJR Best Quartile", "Categories"]]
+    df = df[["Title", "Issn", "SJR Best Quartile", "Categories", "Publisher"]]
     df = df[df['SJR Best Quartile'] == 'Q1']
     df["Year"] = csv_file.split(" ")[1].split(".")[0]
     dataframes.append(df)

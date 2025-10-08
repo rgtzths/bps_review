@@ -5,7 +5,7 @@ import seaborn as sns
 from matplotlib.patches import Patch
 
 # opening aggregated results
-df = pd.read_csv('aggregated_results_filtered_categorized.csv', keep_default_na=False)
+df = pd.read_csv('final_results.csv', keep_default_na=False)
 
 # removing columns that are not needed for analysis
 results = df.drop(columns=['Title', 'Year', 'ISSN', 'DOI', 'Link', 'Score'])
