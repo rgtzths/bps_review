@@ -13,10 +13,12 @@ results = df.drop(columns=['Title', 'Year', 'ISSN', 'DOI', 'Link', 'Score'])
 # Preparing data for grouped heatmap plots #
 # adding break-lines in Telecom Category to better displayed in the heatmap
 break_line_dict = {
-    'Channel and Physical Layer': 'Channel and Physical\nLayer',
-    'Network Slicing and Management': 'Network Slicing\nand Management',
-    'Resource and Traffic Management': 'Resource and\nTraffic Management',
-    'User Mobility and Positioning': 'User Mobility\nand Positioning',
+    'Channel and Physical Layer': 'Channel Man & PHY layer',
+    'Network Slicing and Management': 'Network Slicing & Management',
+    'Resource and Traffic Management': 'Resource & Traffic Management',
+    'User Mobility and Positioning': 'User Mobility & Positioning',
+    'Computing and Edge': 'Edge Computing',
+    'Security and Privacy': 'Security & Privacy',
 }
 results['Telecom Category'] = results['Telecom Category'].replace(break_line_dict)
 
@@ -34,6 +36,7 @@ for col in results.columns[1:]:
 grouped_results = results.groupby('Telecom Category').mean().reset_index()
 
 def plot_full_heatmap():
+    plt.rcParams.update({'font.size': 22})  # Global font size
     global df
     results_for_full_heatmap = df.drop(columns=['Title', 'Year', 'ISSN', 'Telecom Category', 'Link', 'Score'])
     # Set DOI as index
@@ -85,7 +88,7 @@ def plot_full_heatmap():
 
     # Add custom legend to the plot
     legend = ax.legend(handles=legend_elements,
-                       bbox_to_anchor=(1.05, 1.0),  # Position legend to the right, at the top
+                       bbox_to_anchor=(1.02, 1.0),  # Position legend to the right, at the top
                        loc='upper left',  # Anchor point is upper left of legend
                        frameon=True,
                        fancybox=True,
@@ -93,17 +96,33 @@ def plot_full_heatmap():
                        title='Values')
 
     # Customize the plot
-    plt.title('Research Paper Analysis Heatmap', fontsize=16, pad=20)
+    # plt.title('Research Paper Analysis Heatmap', fontsize=16, pad=20)
     # plt.xlabel('Analysis Criteria', fontsize=12)
-    plt.ylabel('DOI', fontsize=12)
-    plt.xticks(rotation=45, ha='right')
+    # plt.ylabel('DOI', fontsize=12)
+    plt.ylabel('')
+    # remove the y labels
+    ax.set_yticklabels([])
+    # remove the tick marks (the small "-" lines)
+    ax.tick_params(axis='y', which='both', length=0)
 
+    plt.xticks(rotation=45, ha='right')
     num_xticks = len(ax.get_xticks())
-    new_labels = [f'BP{i+1}' for i in range(num_xticks)]
+
+    # new_labels = [f'BP{i+1}' for i in range(num_xticks)]
+    new_labels = [
+        'BP1', 'BP2', 'BP3', 'BP4', 'BP5', 'BP6', 'BP7', 'BP8', 'BP9', 'BP10',
+        'BP11', 'BP12', 'BP13', 'BP14.1', 'BP14.2', 'BP15', 'BP16',
+        'BP17', 'BP18', 'BP19', 'BP20', 'BP21',
+    ]
+
     ax.set_xticklabels(new_labels, rotation=45, ha='right')
 
     # Adjust layout to prevent cutting off labels
     plt.tight_layout()
+
+    # Save the plot as SVG and PNG
+    plt.savefig('full_heatmap.pdf', format='pdf', bbox_inches='tight')
+    plt.savefig('full_heatmap.png', format='png', bbox_inches='tight', dpi=300)
 
     # Show the plot
     plt.show()
@@ -122,37 +141,51 @@ def plot_heatmap_by_category():
     cbar = ax.collections[0].colorbar
     cbar.set_ticks([0, 1])
     cbar.set_ticklabels(['Not compliant', 'Compliant'])
-    plt.title('Compliance Levels by ML Subcategory')
+    # plt.title('Compliance Levels by ML Subcategory')
     # plt.ylabel('Telecom Category')
     # plt.xlabel('Criteria')
     # plt.xticks(rotation=45, ha='right')
     num_xticks = len(ax.get_xticks())
-    new_labels = [f'BP{i+1}' for i in range(num_xticks)]
+
+    # new_labels = [f'BP{i+1}' for i in range(num_xticks)]
+    new_labels = [
+        'BP1', 'BP2', 'BP3', 'BP4', 'BP5', 'BP6', 'BP7', 'BP8', 'BP9', 'BP10',
+        'BP11', 'BP12', 'BP13', 'BP14.1', 'BP14.2', 'BP15', 'BP16',
+        'BP17', 'BP18', 'BP19', 'BP20', 'BP21',
+    ]
+
     ax.set_xticklabels(new_labels, rotation=45, ha='right')
+
+    # removing the ylabel
+    plt.ylabel('')
+
     plt.tight_layout()
+
+    plt.savefig('heatmap_by_category.pdf', format='pdf', bbox_inches='tight')
+    plt.savefig('heatmap_by_category.png', format='png', bbox_inches='tight', dpi=300)
     plt.show()
 
 def plot_heatmap_by_parent_category():
     global grouped_results
 
     parent_cat_dict = {
-        'Presents the task to solve': 'Scope Definition',
-        'Presents the state-of-the-art approaches': 'Scope Definition',
-        'Describes the available data': 'Scope Definition',
-        'Describes the model inputs/ outputs': 'Scope Definition',
-        'Describes the model': 'Scope Definition',
+        'Presents the task to solve': 'Conceptualization',
+        'Presents the state-of-the-art approaches': 'Conceptualization',
+        'Describes the available data': 'Conceptualization',
+        'Describes the model inputs/ outputs': 'Conceptualization',
+        'Describes the model': 'Conceptualization',
         'Presents data preprocessing': 'Data Handling',
         'Presents data division': 'Data Handling',
         'Presents data distribution': 'Data Handling',
-        'Presents hyperparameter tuning': 'Model Training/evaluation',
-        'Uses the correct metrics for evaluation': 'Model Training/evaluation',
-        'Describes the experiments performed': 'Model Training/evaluation',
-        'Describes the testing environment': 'Model Training/evaluation',
-        'Describes the used hyperparameters': 'Model Training/evaluation',
-        'Uses real-world datasets': 'Model Training/evaluation',
-        'Uses open datasets': 'Model Training/evaluation',
-        'Uses multiple datasets': 'Model Training/evaluation',
-        'Compares with state-of-the-art models': 'Model Training/evaluation',
+        'Presents hyperparameter tuning': 'Model Development\n& Evaluation',
+        'Uses the correct metrics for evaluation': 'Model Development\n& Evaluation',
+        'Describes the experiments performed': 'Model Development\n& Evaluation',
+        'Describes the testing environment': 'Model Development\n& Evaluation',
+        'Describes the used hyperparameters': 'Model Development\n& Evaluation',
+        'Uses real-world datasets': 'Model Development\n& Evaluation',
+        'Uses open datasets': 'Model Development\n& Evaluation',
+        'Uses multiple datasets': 'Model Development\n& Evaluation',
+        'Compares with state-of-the-art models': 'Model Development\n& Evaluation',
         'Critically analyzes production applicability': 'Model Deployment',
         'Publishes the used dataset': 'Publication',
         'Publishes the trained model': 'Publication',
@@ -161,14 +194,29 @@ def plot_heatmap_by_parent_category():
     }
 
     # Grouping the columns (categories) by their parent category with mean
-    parent_categories = ['Scope Definition', 'Data Handling', 'Model Training/evaluation', 'Model Deployment', 'Publication']
+    parent_categories = ['Conceptualization', 'Data Handling', 'Model Development\n& Evaluation', 'Model Deployment', 'Publication']
     grouped_by_parent = pd.DataFrame(columns=['Telecom Category'] + parent_categories)
     grouped_by_parent['Telecom Category'] = grouped_results['Telecom Category']
     for parent in parent_categories:
         cols = [col for col, p in parent_cat_dict.items() if p == parent]
         grouped_by_parent[parent] = grouped_results[cols].mean(axis=1)
 
-    plt.figure(figsize=(7.5, 7))
+
+    # adding a new row for General Telecommunications (is a average of all columns)
+    general_telecom_data = grouped_by_parent[parent_categories].mean().values
+    general_telecom_row = pd.DataFrame([['General Telecommunications'] + list(general_telecom_data)], columns=grouped_by_parent.columns)
+    grouped_by_parent = pd.concat([grouped_by_parent, general_telecom_row], ignore_index=True)
+
+    # adding General ML as another row
+    general_ml_data = [0.56470295, 0.28473979, 0.82753725, 0.08602814, 0.54932314]
+    general_ml_row = pd.DataFrame([['General ML'] + general_ml_data], columns=grouped_by_parent.columns)
+    grouped_by_parent = pd.concat([grouped_by_parent, general_ml_row], ignore_index=True)
+
+
+
+    # plt.figure(figsize=(7.5, 7))
+    # plt.figure(figsize=(7.5, 8))
+    plt.figure(figsize=(16*.6, 9*.6))
     ax = sns.heatmap(
         grouped_by_parent.set_index('Telecom Category'),
         annot=False,
@@ -176,12 +224,30 @@ def plot_heatmap_by_parent_category():
         # cbar_kws={'label': 'Compliance Level'},
         linewidths=0.8  # Adds separation between squares
     )
+
+    gap_factor = 0.10  # try values between 0.1 and 0.3
+
+    bottom, top = ax.get_ylim()
+    row_height = (top - bottom) / grouped_by_parent.shape[0]
+
+    ax.set_ylim(bottom - gap_factor * row_height, top)
+
+
+
+
+
     cbar = ax.collections[0].colorbar
     cbar.set_ticks([0, 0.88])
     cbar.set_ticklabels(['Not compliant', 'Compliant'])
-    plt.title('Compliance Levels by ML Category')
+    # plt.title('Compliance Levels by ML Category')
     plt.xticks(rotation=45, ha='right')
+    # removing the ylabel
+    plt.ylabel('')
     plt.tight_layout()
+
+    # saving to the plots as pdf
+    plt.savefig('heatmap_by_parent_category.svg', format='svg', bbox_inches='tight')
+    plt.savefig('heatmap_by_parent_category.png', format='png', bbox_inches='tight', dpi=300)
     plt.show()
 
 
