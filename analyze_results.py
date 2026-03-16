@@ -93,8 +93,87 @@ def plot_full_heatmap(df : pd.DataFrame, output_dir : Path, bp_labels : list[str
     # Show the plot
     plt.show()
 
+def plot_bp_correlation_heatmap(
+    df: pd.DataFrame,
+    bp_labels: list[str],
+    encoding_dict: dict[str, float] = None,
+    method: str = "pearson",
+    output_dir: Path = None,
+    figsize=(12, 10),
+    annot: bool = False,
+    cmap: str = "Blues",
+):
+    """
+    Plots the correlation matrix between the best practices (BPs) as a heatmap.
+    method: 'pearson', 'spearman', or 'kendall'
+    """
+    bp_df = df.drop(columns=['Title', 'Year', 'ISSN', 'Telecom Category', 'Link', 'Score', 'DOI']).replace(encoding_dict).dropna()
+
+    corr = bp_df.corr(method=method)
+
+    plt.figure(figsize=figsize)
+    sns.heatmap(
+        corr,
+        annot=annot,
+        cmap=cmap,
+        linewidths=0.8,
+        xticklabels=bp_labels,
+        yticklabels=bp_labels,
+        vmin=-1, vmax=1
+    )
+
+    plt.xticks(rotation=45, ha='right')
+    plt.yticks(rotation=0)
+    plt.tight_layout()
+
+    if output_dir is not None:
+        plt.savefig(output_dir / 'bp_correlation_heatmap.pdf', format='pdf', bbox_inches='tight')
+        plt.savefig(output_dir / 'bp_correlation_heatmap.png', format='png', bbox_inches='tight', dpi=300)
+    plt.show()
+    return corr
+    
+def print_bp_correlations(
+    df: pd.DataFrame,
+    bp_labels: list[str],
+    encoding_dict: dict[str, float] = None,
+    method: str = "pearson",
+    output_path: Path = None,
+):
+    """
+    Computes and prints the correlation matrix between the best practices (BPs).
+    method: 'pearson', 'spearman', or 'kendall'
+    """
+    # Extract only BP columns
+    bp_df = df.drop(columns=['Title', 'Year', 'ISSN', 'Telecom Category', 'Link', 'Score', 'DOI']).replace(encoding_dict).dropna()
+    corr = bp_df.corr(method=method)
+    # Print as markdown table
+    header = "| BP | " + " | ".join(bp_labels) + " |"
+    separator = "|---" * (len(bp_labels)+1) + "|"
+    rows = [
+        "| " + bp_labels[i] + " | " + " | ".join(f"{corr.iloc[i, j]:.2f}" if not pd.isna(corr.iloc[i, j]) else "" for j in range(len(bp_labels))) + " |"
+        for i in range(len(bp_labels))
+    ]
+    markdown_table = "\n".join([header, separator] + rows)
+    print(f"\nCorrelation matrix between BPs (method: {method}):\n")
+    print(markdown_table)
+
+    # Print only correlations above 0.5 (absolute value), excluding self-correlations
+    print("\nCorrelations above 0.5 (|corr| > 0.5):")
+    found = False
+    for i in range(len(bp_labels)):
+        for j in range(i+1, len(bp_labels)):
+            val = corr.iloc[i, j]
+            if pd.notna(val) and abs(val) > 0.5:
+                print(f"{bp_labels[i]} - {bp_labels[j]}: {val:.2f}")
+                found = True
+    if not found:
+        print("None above threshold.")
+
+    if output_path is not None:
+        Path(output_path).write_text(markdown_table, encoding="utf-8")
+    return corr
+
 def plot_heatmap_by_category(grouped_results : pd.DataFrame, output_dir : Path, bp_labels : list[str]):
-    print(grouped_results)
     plt.figure(figsize=(11, 4))
     grouped_results = grouped_results.set_index('Telecom Category')
     ax = sns.heatmap(
@@ -118,6 +197,41 @@ def plot_heatmap_by_category(grouped_results : pd.DataFrame, output_dir : Path, 
     plt.savefig(output_dir / 'heatmap_by_category.pdf', format='pdf', bbox_inches='tight')
     plt.savefig(output_dir / 'heatmap_by_category.png', format='png', bbox_inches='tight', dpi=300)
     plt.show()
+
+def print_compliance_by_telecom_category(
+    df: pd.DataFrame,
+    value_format: str = "{:.2f}",
+    encoding_dict: dict[str, float] = None,
+    output_path: Path = None,
+):
+    """
+    Prints the average compliance by telecom category over all best practices as a markdown table.
+    """
+    results = df.drop(columns=['Title', 'Year', 'ISSN', 'DOI', 'Link', 'Score'])
+    results['Telecom Category'] = results['Telecom Category'].replace({
+        'Channel and Physical Layer': 'Channel Man & PHY layer',
+        'Network Slicing and Management': 'Network Slicing & Management',
+        'Resource and Traffic Management': 'Resource & Traffic Management',
+        'User Mobility and Positioning': 'User Mobility & Positioning',
+        'Computing and Edge': 'Edge Computing',
+        'Security and Privacy': 'Security & Privacy',
+    })
+    for col in results.columns[1:]:
+        results[col] = results[col].map(encoding_dict)
+    grouped = results.groupby('Telecom Category').mean()
+    avg_compliance = grouped.mean(axis=1)
+    # Markdown table
+    header = "| Telecom Category | Avg Compliance |"
+    separator = "| --- | --- |"
+    rows = [
+        f"| {cat} | {value_format.format(val) if not pd.isna(val) else ''} |"
+        for cat, val in avg_compliance.items()
+    ]
+    markdown_table = "\n".join([header, separator] + rows)
+    print(markdown_table)
+    if output_path is not None:
+        Path(output_path).write_text(markdown_table, encoding="utf-8")
+    return markdown_table
 
 def plot_heatmap_by_parent_category(grouped_results : pd.DataFrame, output_dir : Path):
 
@@ -195,14 +309,6 @@ def plot_heatmap_by_parent_category(grouped_results : pd.DataFrame, output_dir :
     plt.show()
 
 def get_results_by_year(df, encoding_dict=None):
-
-    if encoding_dict is None:
-        encoding_dict = {
-            'Yes': 1,
-            'Partial': 0.5,
-            'No': 0,
-            'NA': np.nan
-        }
 
     results = df.drop(columns=['Title', 'ISSN', 'DOI', 'Link', 'Score'])
     criteria_cols = [col for col in results.columns if col not in ['Year', 'Telecom Category']]
@@ -282,18 +388,51 @@ def print_results_by_year_markdown(
     markdown_table = "\n".join([header, separator] + rows)
     print(markdown_table)
 
+    # Print average compliance per year
+    avg_compliance_per_year = grouped_by_year.set_index('Year').mean(axis=1)
+    print("\nAverage compliance per year:")
+    for year, avg in avg_compliance_per_year.items():
+        print(f"{year}: {value_format.format(avg) if not pd.isna(avg) else ''}")
+
     if output_path is not None:
         Path(output_path).write_text(markdown_table, encoding="utf-8")
 
     return markdown_table
 
+def percentage_compliant_rows(df: pd.DataFrame, bp_list: list[str], encoding_dict: dict[str, float] = None, compliance_value: float = 1.0) -> float:
+    """
+    Returns the percentage of rows that comply with all BPs in bp_list.
+    A row is compliant if all specified BPs have the compliance_value (default: 1.0, i.e., 'Yes').
+    """
+    if encoding_dict is None:
+        encoding_dict = {
+            'Yes': 1.0,
+            'Partial': 0.5,
+            'No': 0.0,
+            'NA': None
+        }
+
+    bp_df = df[bp_list].replace(encoding_dict)
+    compliant = (bp_df == compliance_value).all(axis=1)
+    total_rows = len(bp_df)
+    if total_rows == 0:
+        return 0.0
+    percentage = compliant.sum() / total_rows * 100
+    return percentage
+
 if __name__ == "__main__":
+
 
     parser = argparse.ArgumentParser(description='Analyze the results of the systematic review.')
     parser.add_argument('--full_heatmap', action='store_true', help='Plot the full heatmap of all papers and criteria.')
     parser.add_argument('--heatmap_by_category', action='store_true', help='Plot the heatmap grouped by telecom category.')
     parser.add_argument('--heatmap_by_parent_category', action='store_true', help='Plot the heatmap grouped by parent category.')
     parser.add_argument('--heatmap_by_year', action='store_true', help='Plot the results by year as a heatmap.')
+    parser.add_argument('--print_results_by_year', action='store_true', help='Print the results by year as a markdown table and average compliance.')
+    parser.add_argument('--print_compliance_by_telecom_category', action='store_true', help='Print the average compliance by telecom category over all best practices.')
+    parser.add_argument('--print_bp_correlations', action='store_true', help='Print the correlation matrix between best practices (BPs).')
+    parser.add_argument('--plot_bp_correlation_heatmap', action='store_true', help='Plot the correlation matrix between best practices (BPs) as a heatmap.')
+    parser.add_argument('--count_compliant_rows', action='store_true', help='Count the number of compliant rows for specific BPs.')
     parser.add_argument('--all', action='store_true', help='Run all analyses and plots.')
     parser.add_argument('--input_csv', type=str, default='dataset/final_results.csv', help='Path to the input CSV file containing the results.')
     parser.add_argument('--output_dir', type=str, default='figures', help='Directory to save the output plots.')
@@ -329,9 +468,9 @@ if __name__ == "__main__":
 
     # encoding the values
     encoding_dict = {
-        'Yes': 1,
+        'Yes': 1.0,
         'Partial': 0.5,
-        'No': 0,
+        'No': 0.0,
         'NA': None
     }
     for col in results.columns[1:]:
@@ -340,7 +479,7 @@ if __name__ == "__main__":
     # grouping by Telecom Category and calculating the mean for each category
     grouped_results = results.groupby('Telecom Category').mean().reset_index()
 
-    # Plotting the heatmaps
+    # Plotting the heatmaps and printing results
     if args.full_heatmap or args.all:
         plot_full_heatmap(df, output_dir=output_dir, bp_labels=bp_labels)
     if args.heatmap_by_category or args.all:
@@ -349,6 +488,17 @@ if __name__ == "__main__":
         plot_heatmap_by_parent_category(grouped_results, output_dir=output_dir)
     if args.heatmap_by_year or args.all:
         plot_heatmap_by_year(df, output_dir=output_dir, bp_labels=bp_labels, encoding_dict=encoding_dict)
+    if args.print_results_by_year:
+        print_results_by_year_markdown(df, bp_labels=bp_labels, encoding_dict=encoding_dict)
+    if args.print_compliance_by_telecom_category:
+        print_compliance_by_telecom_category(df, encoding_dict=encoding_dict)
+    if args.print_bp_correlations:
+        print_bp_correlations(df, bp_labels=bp_labels, encoding_dict=encoding_dict)
+    if args.plot_bp_correlation_heatmap:
+        plot_bp_correlation_heatmap(df, bp_labels=bp_labels, encoding_dict=encoding_dict, output_dir=output_dir)
+    if args.count_compliant_rows:
+        compliant_percentage = percentage_compliant_rows(df, ['Presents the task to solve', 'Presents the state-of-the-art approaches', 'Uses the correct metrics for evaluation'], encoding_dict=encoding_dict)
+        print(f"Percentage of compliant rows for ['Presents the task to solve', 'Presents the state-of-the-art approaches', 'Uses the correct metrics for evaluation']: {compliant_percentage:.2f}%")
 
 
 
