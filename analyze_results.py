@@ -11,6 +11,8 @@ from matplotlib.patches import Patch
 
 def plot_full_heatmap(df : pd.DataFrame, output_dir : Path, bp_labels : list[str]):
 
+    df = df.iloc[1:].reset_index(drop=True)
+
     plt.rcParams.update({'font.size': 22})  # Global font size
     results_for_full_heatmap = df.drop(columns=['Title', 'Year', 'ISSN', 'Telecom Category', 'Link', 'Score'])
     # Set DOI as index
@@ -154,19 +156,23 @@ def print_bp_correlations(
         for i in range(len(bp_labels))
     ]
     markdown_table = "\n".join([header, separator] + rows)
-    print(f"\nCorrelation matrix between BPs (method: {method}):\n")
-    print(markdown_table)
+    #print(f"\nCorrelation matrix between BPs (method: {method}):\n")
+    #print(markdown_table)
 
-    # Print only correlations above 0.5 (absolute value), excluding self-correlations
-    print("\nCorrelations above 0.5 (|corr| > 0.5):")
-    found = False
+    # Print only correlations above 0.4 (absolute value), excluding self-correlations
+    print("\nCorrelations above 0.4 (|corr| > 0.4):")
+    correlations = []
     for i in range(len(bp_labels)):
-        for j in range(i+1, len(bp_labels)):
+        for j in range(i + 1, len(bp_labels)):
             val = corr.iloc[i, j]
-            if pd.notna(val) and abs(val) > 0.5:
-                print(f"{bp_labels[i]} - {bp_labels[j]}: {val:.2f}")
-                found = True
-    if not found:
+            if pd.notna(val) and abs(val) > 0.4:
+                correlations.append((bp_labels[i], bp_labels[j], val))
+
+    if correlations:
+        correlations.sort(key=lambda item: abs(item[2]), reverse=True)
+        for bp_i, bp_j, val in correlations:
+            print(f"{bp_i} - {bp_j}: {val:.2f}")
+    else:
         print("None above threshold.")
 
     if output_path is not None:
@@ -234,7 +240,7 @@ def print_compliance_by_telecom_category(
     return markdown_table
 
 def plot_heatmap_by_parent_category(grouped_results : pd.DataFrame, output_dir : Path):
-
+    print(grouped_results)
     parent_cat_dict = {
         'Presents the task to solve': 'Conceptualization',
         'Presents the state-of-the-art approaches': 'Conceptualization',
@@ -284,7 +290,7 @@ def plot_heatmap_by_parent_category(grouped_results : pd.DataFrame, output_dir :
         grouped_by_parent.set_index('Telecom Category'),
         annot=False,
         cmap=sns.color_palette("Blues", 7),
-        linewidths=0.8  # Adds separation between squares
+        linewidths=0.8,
     )
 
     gap_factor = 0.10  # try values between 0.1 and 0.3
@@ -295,7 +301,7 @@ def plot_heatmap_by_parent_category(grouped_results : pd.DataFrame, output_dir :
     ax.set_ylim(bottom - gap_factor * row_height, top)
 
     cbar = ax.collections[0].colorbar
-    cbar.set_ticks([0, 0.88])
+    cbar.set_ticks([0, 0.85])
     cbar.set_ticklabels(['Not compliant', 'Compliant'])
     # plt.title('Compliance Levels by ML Category')
     plt.xticks(rotation=45, ha='right')
@@ -305,6 +311,7 @@ def plot_heatmap_by_parent_category(grouped_results : pd.DataFrame, output_dir :
 
     # saving to the plots as pdf
     plt.savefig(output_dir / 'heatmap_by_parent_category.svg', format='svg', bbox_inches='tight')
+    plt.savefig(output_dir / 'heatmap_by_parent_category.pdf', format='pdf', bbox_inches='tight')
     plt.savefig(output_dir / 'heatmap_by_parent_category.png', format='png', bbox_inches='tight', dpi=300)
     plt.show()
 
@@ -448,8 +455,13 @@ if __name__ == "__main__":
         'BP17', 'BP18', 'BP19', 'BP20', 'BP21'
     ]
     
-    # opening aggregated results
-    df = pd.read_csv(args.input_csv, keep_default_na=False)
+    # opening aggregated results (first two lines are the header)
+    df = pd.read_csv(args.input_csv, header=[0, 1], keep_default_na=False)
+
+    df.columns = [
+        sub if isinstance(sub, str) and sub.strip() and not str(sub).startswith('Unnamed:') else main
+        for main, sub in df.columns
+    ]
 
     # removing columns that are not needed for analysis
     results = df.drop(columns=['Title', 'Year', 'ISSN', 'DOI', 'Link', 'Score'])
